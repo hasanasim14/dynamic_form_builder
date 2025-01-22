@@ -2,7 +2,6 @@
 
 import type React from "react";
 import type { Section, Field } from "../types/form";
-import FieldRenderer from "./FieldRenderer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";

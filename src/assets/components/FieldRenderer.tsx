@@ -2,7 +2,7 @@
 
 import type React from "react";
 import { useFormContext } from "react-hook-form";
-import { type Field, FieldType } from "../types/form";
+import { type Field } from "../types/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -16,7 +16,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import { cn } from "@/lib/utils";
 
 interface FieldRendererProps {
   field: Field;
@@ -52,23 +51,12 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
             </SelectContent>
           </Select>
         );
-      //   case "radio":
-      //     return (
-      //       <RadioGroup onValueChange={(value) => updateField(field.id, { value })}>
-      //         {(field.options || []).map((option) => (
-      //           <div key={option} className="flex items-center space-x-2">
-      //             <RadioGroupItem value={option} id={`${field.id}-${option}`} />
-      //             <Label htmlFor={`${field.id}-${option}`}>{option}</Label>
-      //           </div>
-      //         ))}
-      //       </RadioGroup>
-      //     )
       case "radio":
         return (
           <RadioGroup
             onValueChange={(value) => {
-              console.log("Selected value:", value); // Logs the selected value
-              updateField(field.id, { value }); // Updates the field with the selected value
+              console.log("Selected value:", value);
+              updateField(field.id, { value });
             }}
           >
             {(field.options || []).map((option) => (
