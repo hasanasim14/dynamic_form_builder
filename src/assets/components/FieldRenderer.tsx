@@ -1,8 +1,8 @@
 "use client";
 
-import type React from "react";
+import React from "react";
 import { useFormContext } from "react-hook-form";
-import { type Field } from "../types/form";
+import { Field } from "../types/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -26,7 +26,6 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
   field,
   updateField,
 }) => {
-  console.log("oo", field);
   const {
     register,
     watch,
@@ -39,7 +38,9 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         return <Input {...register(field.id, { required: field.required })} />;
       case "dropdown":
         return (
-          <Select onValueChange={(value) => updateField(field.id, { value })}>
+          <Select
+            onValueChange={(value: string) => updateField(field.id, { value })}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select an option" />
             </SelectTrigger>
@@ -55,10 +56,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
       case "radio":
         return (
           <RadioGroup
-            onValueChange={(value) => {
-              console.log("Selected value:", value);
-              updateField(field.id, { value });
-            }}
+            onValueChange={(value: string) => updateField(field.id, { value })}
           >
             {(field.options || []).map((option) => (
               <div key={option} className="flex items-center space-x-2">
@@ -68,7 +66,6 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
             ))}
           </RadioGroup>
         );
-
       case "file":
         return (
           <Input
@@ -83,7 +80,9 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         );
       case "country":
         return (
-          <Select onValueChange={(value) => updateField(field.id, { value })}>
+          <Select
+            onValueChange={(value: string) => updateField(field.id, { value })}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select a country" />
             </SelectTrigger>
@@ -107,7 +106,11 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         );
       case "phone":
         return (
-          <PhoneInput {...register(field.id, { required: field.required })} />
+          <PhoneInput
+            value={watch(field.id)}
+            onChange={(value) => updateField(field.id, { value })}
+            required={field.required}
+          />
         );
       default:
         return null;

@@ -1,54 +1,63 @@
-export type FieldType = "text" | "dropdown" | "radio" | "file" | "checkbox" | "country" | "date" | "phone"
+export type FieldType =
+  | "text"
+  | "dropdown"
+  | "radio"
+  | "file"
+  | "checkbox"
+  | "country"
+  | "date"
+  | "phone";
 
 export interface FieldBase {
-  id: string
-  type: FieldType
-  label: string
-  required?: boolean
+  id: string;
+  type: FieldType;
+  label: string;
+  required?: boolean;
   validation?: {
-    type: string
-    value: any
-    message: string
-  }[]
+    type: string;
+    value: any;
+    message: string;
+  }[];
   conditionalLogic?: {
-    dependsOn: string
-    showIf: (value: any) => boolean
-  }
+    dependsOn: string;
+    showIf: (value: any) => boolean;
+  };
+  value?: any;
 }
 
 export interface TextField extends FieldBase {
-  type: "text"
+  type: "text";
 }
 
 export interface DropdownField extends FieldBase {
-  type: "dropdown"
-  options: string[]
+  type: "dropdown";
+  options: string[];
 }
 
 export interface RadioField extends FieldBase {
-  type: "radio"
-  options: string[]
+  type: "radio";
+  options: string[];
 }
 
 export interface FileField extends FieldBase {
-  type: "file"
-  accept?: string
+  type: "file";
+  accept?: string;
 }
 
 export interface CheckboxField extends FieldBase {
-  type: "checkbox"
+  type: "checkbox";
 }
 
 export interface CountryField extends FieldBase {
-  type: "country"
+  type: "country";
 }
 
 export interface DateField extends FieldBase {
-  type: "date"
+  type: "date";
 }
 
 export interface PhoneField extends FieldBase {
-  type: "phone"
+  type: "phone";
 }
 
 export type Field =
@@ -59,19 +68,18 @@ export type Field =
   | CheckboxField
   | CountryField
   | DateField
-  | PhoneField
+  | PhoneField;
 
 export interface Section {
-  id: string
-  title: string
-  fields: (Field | Section)[]
+  id: string;
+  title: string;
+  fields: (Field | Section)[];
   conditionalLogic?: {
-    dependsOn: string
-    showIf: (value: any) => boolean
-  }
+    dependsOn: string;
+    showIf: (value: any) => boolean;
+  };
 }
 
 export interface FormData {
-  sections: Section[]
+  sections: Section[];
 }
-
