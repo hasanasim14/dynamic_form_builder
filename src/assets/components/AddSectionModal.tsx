@@ -1,6 +1,3 @@
-"use client";
-
-import type React from "react";
 import { useState } from "react";
 import {
   Dialog,
@@ -40,6 +37,10 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
   const [fields, setFields] = useState<
     { type: FieldType; label: string; options?: string[] }[]
   >([]);
+  const [error, setError] = useState<{
+    sectionTitle?: string;
+    fields?: string[];
+  }>({});
 
   const addField = () => {
     setFields([...fields, { type: "text", label: "" }]);
@@ -59,7 +60,31 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
     setFields(newFields);
   };
 
+  const validate = () => {
+    const newError: { sectionTitle?: string; fields?: string[] } = {};
+    if (!sectionTitle.trim()) {
+      newError.sectionTitle = "Section Title is required.";
+    }
+
+    const fieldErrors: string[] = [];
+    fields.forEach((field, index) => {
+      if (!field.label.trim()) {
+        fieldErrors.push(`Field Label is required for field ${index + 1}.`);
+      }
+    });
+
+    if (fieldErrors.length) {
+      newError.fields = fieldErrors;
+    }
+
+    setError(newError);
+
+    return !newError.sectionTitle && !newError.fields;
+  };
+
   const handleSubmit = () => {
+    if (!validate()) return;
+
     onAdd(sectionTitle, fields);
     setSectionTitle("");
     setFields([]);
@@ -72,6 +97,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
         <DialogHeader>
           <DialogTitle>Add New Section</DialogTitle>
         </DialogHeader>
+
         <div className="flex-grow overflow-y-auto pb-16">
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
@@ -84,7 +110,13 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
                 onChange={(e) => setSectionTitle(e.target.value)}
                 className="col-span-3"
               />
+              {error.sectionTitle && (
+                <div className="col-span-4 text-red-600 text-sm">
+                  {error.sectionTitle}
+                </div>
+              )}
             </div>
+
             {fields.map((field, index) => (
               <div key={index} className="grid grid-cols-4 items-center gap-4">
                 <div className="col-span-4 flex items-center justify-between">
@@ -119,6 +151,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
                     <SelectItem value="phone">Phone</SelectItem>
                   </SelectContent>
                 </Select>
+
                 <Label htmlFor={`fieldLabel-${index}`} className="text-right">
                   Field Label
                 </Label>
@@ -130,6 +163,12 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
                   }
                   className="col-span-3"
                 />
+                {error.fields && error.fields[index] && (
+                  <div className="col-span-4 text-red-600 text-sm">
+                    {error.fields[index]}
+                  </div>
+                )}
+
                 {(field.type === "dropdown" || field.type === "radio") && (
                   <>
                     <Label
@@ -157,12 +196,21 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
           </div>
         </div>
 
-        <DialogFooter className="absolute bottom-0 left-0 w-full bg-white">
-          <div className="flex justify-between p-4">
-            <Button type="button" onClick={addField}>
+        <DialogFooter className="absolute bottom-0 left-0 w-full bg-gray-50 shadow-lg">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={addField}
+              className="w-full sm:w-auto"
+            >
               Add Field
             </Button>
-            <Button type="button" onClick={handleSubmit}>
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700"
+            >
               Add Section
             </Button>
           </div>
