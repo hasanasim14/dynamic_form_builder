@@ -26,6 +26,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
   field,
   updateField,
 }) => {
+  console.log("oo", field);
   const {
     register,
     watch,

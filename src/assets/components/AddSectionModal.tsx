@@ -91,6 +91,8 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
     onClose();
   };
 
+  // console.log("fields are", fields);
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] max-h-[80vh] flex flex-col">
