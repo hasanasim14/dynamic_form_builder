@@ -337,7 +337,7 @@ const FormBuilder: React.FC = () => {
             />
           ))}
         </div>
-        <div className="flex flex-col md:flex-row items-center gap-4 mt-6">
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-6">
           <Button
             type="button"
             variant="outline"

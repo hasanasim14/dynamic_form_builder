@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { Field } from "../types/form";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,28 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
     watch,
     formState: { errors },
   } = useFormContext();
+
+  const [countries, setCountries] = useState<{ code: string; name: string }[]>(
+    []
+  );
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      const response = await fetch("https://restcountries.com/v3.1/all");
+      const data = await response.json();
+      // Sort countries by name and map to include code and name
+      const sortedCountries = data
+        .map((country: any) => ({
+          code: country.cca2,
+          name: country.name.common, // `common` holds the country name
+        }))
+        .sort((a: any, b: any) => a.name.localeCompare(b.name)); // Sort alphabetically
+      setCountries(sortedCountries);
+    };
+    fetchCountries();
+  }, []);
+
+  console.log("The countries", countries);
 
   const renderField = () => {
     switch (field.type) {
@@ -78,25 +100,55 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         return (
           <Checkbox {...register(field.id, { required: field.required })} />
         );
+      // case "country":
+      //   return (
+      //     <Select
+      //       onValueChange={(value: string) => {
+      //         console.log("Selected country:", value); // Log the selected country
+      //         updateField(field.id, { value });
+      //       }}
+      //     >
+      //       <SelectTrigger>
+      //         <SelectValue placeholder="Select a country" />
+      //       </SelectTrigger>
+      //       <SelectContent>
+      //         <SelectItem value="us">United States</SelectItem>
+      //         <SelectItem value="ca">Canada</SelectItem>
+      //         <SelectItem value="uk">United Kingdom</SelectItem>
+      //         <SelectItem value="au">Australia</SelectItem>
+      //         <SelectItem value="de">Germany</SelectItem>
+      //         <SelectItem value="fr">France</SelectItem>
+      //         <SelectItem value="jp">Japan</SelectItem>
+      //       </SelectContent>
+      //     </Select>
+      //   );
       case "country":
         return (
           <Select
-            onValueChange={(value: string) => updateField(field.id, { value })}
+            onValueChange={(value: string) => {
+              console.log("Selected country:", value); // Log the selected country
+              updateField(field.id, { value });
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a country" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="us">United States</SelectItem>
-              <SelectItem value="ca">Canada</SelectItem>
-              <SelectItem value="uk">United Kingdom</SelectItem>
-              <SelectItem value="au">Australia</SelectItem>
-              <SelectItem value="de">Germany</SelectItem>
-              <SelectItem value="fr">France</SelectItem>
-              <SelectItem value="jp">Japan</SelectItem>
+              {countries.length > 0 ? (
+                countries.map((country) => (
+                  <SelectItem key={country.code} value={country.code}>
+                    {country.name} {/* Display country name here */}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="null" disabled>
+                  Loading...
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
         );
+
       case "date":
         return (
           <Input
