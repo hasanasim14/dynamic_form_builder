@@ -1,111 +1,36 @@
 "use client";
 
-import React, { useState } from "react";
-import SectionRenderer from "./SectionRenderer";
-import FormPreview from "./FormPreview";
-import AddSectionModal from "./AddSectionModal";
+import type React from "react";
+import { useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { Button } from "@/components/ui/button";
-import type {
-  FormData,
-  Section,
-  Field,
-  FieldType,
-  DropdownField,
-  RadioField,
-  FileField,
-  TextField,
-  CheckboxField,
-  CountryField,
-  DateField,
-  PhoneField,
-} from "../types/form";
+import type { FormData, Section, Field, FieldType } from "../types/form";
+import SectionRenderer from "./SectionRenderer";
+import FormPreview from "./FormPreview";
+import AddSectionModal from "./AddSectionModal";
+import ShadToast from "@/components/ui/shadToast";
 
 const FormBuilder: React.FC = () => {
+  const [isToastOpen, setIsToastOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({ sections: [] });
   const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
   const [currentParentId, setCurrentParentId] = useState<string | null>(null);
   const methods = useForm();
 
-  // const addSection = (
-  //   formTitle: string,
-  //   fields: { type: FieldType; label: string; options?: string[] }[]
-  // ) => {
-  //   const newSection: Section = {
-  //     id: uuidv4(),
-  //     title: formTitle,
-  //     fields: fields.map((field) => ({
-  //       id: uuidv4(),
-  //       ...field,
-  //     })),
-  //   };
-  //   setFormData((prev) => {
-  //     if (currentParentId) {
-  //       return {
-  //         ...prev,
-  //         sections: updateNestedSection(
-  //           prev.sections,
-  //           currentParentId,
-  //           newSection
-  //         ),
-  //       };
-  //     }
-  //     return {
-  //       ...prev,
-  //       sections: [...prev.sections, newSection],
-  //     };
-  //   });
-  //   setCurrentParentId(null);
-  // };
-
   const addSection = (
-    formTitle: string,
+    sectionTitle: string,
     fields: { type: FieldType; label: string; options?: string[] }[]
   ) => {
     const newSection: Section = {
       id: uuidv4(),
-      title: formTitle,
-      fields: fields.map((field) => {
-        switch (field.type) {
-          case "dropdown":
-          case "radio":
-            return {
-              id: uuidv4(),
-              type: field.type,
-              label: field.label,
-              options: field.options || [],
-            } as DropdownField | RadioField;
-
-          case "file":
-            return {
-              id: uuidv4(),
-              type: field.type,
-              label: field.label,
-            } as FileField;
-
-          case "checkbox":
-          case "country":
-          case "date":
-          case "phone":
-          case "text":
-            return {
-              id: uuidv4(),
-              type: field.type,
-              label: field.label,
-            } as
-              | TextField
-              | CheckboxField
-              | CountryField
-              | DateField
-              | PhoneField;
-
-          default:
-            throw new Error(`Unsupported field type: ${field.type}`);
-        }
-      }),
+      title: sectionTitle,
+      fields: fields.map((field) => ({
+        id: uuidv4(),
+        ...field,
+        value: field.type === "checkbox" ? false : "",
+      })),
     };
-
     setFormData((prev) => {
       if (currentParentId) {
         return {
@@ -122,15 +47,8 @@ const FormBuilder: React.FC = () => {
         sections: [...prev.sections, newSection],
       };
     });
-
     setCurrentParentId(null);
   };
-
-  const hasFields = formData.sections.some(
-    (section) =>
-      section.fields.length > 0 ||
-      section.fields.some((item) => "fields" in item && item.fields.length > 0)
-  );
 
   const updateNestedSection = (
     sections: Section[],
@@ -157,47 +75,55 @@ const FormBuilder: React.FC = () => {
     });
   };
 
-  const addField = (sectionId: string) => {
+  const addField = (
+    sectionId: string,
+    fields: { type: FieldType; label: string; options?: string[] }[]
+  ) => {
     setFormData((prev) => {
-      const newField: Field = {
-        id: uuidv4(),
-        type: "text",
-        label: "New Field",
+      const updateFields = (sections: Section[]): Section[] => {
+        return sections.map((section) => {
+          if (section.id === sectionId) {
+            return {
+              ...section,
+              fields: [
+                ...section.fields,
+                ...fields.map((field) => ({
+                  id: uuidv4(),
+                  ...field,
+                  value: field.type === "checkbox" ? false : "",
+                })),
+              ],
+            };
+          } else if ("fields" in section) {
+            return {
+              ...section,
+              fields: updateFields(section.fields as Section[]),
+            };
+          }
+          return section;
+        });
       };
 
-      // const updateFields = (fields: (Field | Section)[]) => {
-      //   return fields.map((item) => {
-      //     if (item.id === sectionId) {
-      //       return {
-      //         ...item,
-      //         fields: [...(item as Section).fields, newField],
-      //       };
-      //     } else if ("fields" in item) {
-      //       return {
-      //         ...item,
-      //         fields: updateFields(item.fields),
-      //       };
-      //     }
-      //     return item;
-      //   });
-      // };
+      return {
+        ...prev,
+        sections: updateFields(prev.sections),
+      };
+    });
+  };
 
-      const updateFields = (
-        fields: (Field | Section)[]
-      ): (Field | Section)[] => {
+  const updateField = (fieldId: string, updates: Partial<Field>) => {
+    setFormData((prev) => {
+      const updateFields = (fields: (Field | Section)[]) => {
         return fields.map((item) => {
-          if (item.id === sectionId) {
-            return {
-              ...item,
-              fields: [...(item as Section).fields, newField],
-            };
+          if (item.id === fieldId) {
+            return { ...item, ...updates };
           } else if ("fields" in item) {
             return {
               ...item,
-              fields: updateFields(item.fields), // Recursive call
+              fields: updateFields(item.fields),
             };
           }
-          return item; // Return unchanged item
+          return item;
         });
       };
 
@@ -208,132 +134,81 @@ const FormBuilder: React.FC = () => {
     });
   };
 
-  // const removeField = (fieldId: string) => {
-  //   setFormData((prev) => {
-  //     const filterFields = (
-  //       fields: (Field | Section)[]
-  //     ): (Field | Section)[] => {
-  //       return fields
-  //         .filter((item) => item.id !== fieldId) // Exclude the field by ID
-  //         .map((item) => {
-  //           if ("fields" in item) {
-  //             return { ...item, fields: filterFields(item.fields) };
-  //           }
-  //           return item;
-  //         });
-  //     };
-
-  //     return {
-  //       ...prev,
-  //       sections: filterFields(prev.sections) as Section[],
-  //     };
-  //   });
-  // };
-
-  // const isSection = (item: Field | Section): item is Section => {
-  //   return "fields" in item;
-  // };
-
-  // const updateField = (fieldId: string, updates: Partial<Field>) => {
-  //   setFormData((prev) => {
-  //     // const updateFields = (fields: (Field | Section)[]) => {
-  //     //   return fields.map((item) => {
-  //     //     if (item.id === fieldId) {
-  //     //       return { ...item, ...updates };
-  //     //     } else if ("fields" in item) {
-  //     //       return {
-  //     //         ...item,
-  //     //         fields: updateFields(item.fields),
-  //     //       };
-  //     //     }
-  //     //     return item;
-  //     //   });
-  //     // };
-
-  //     return {
-  //       ...prev,
-  //       sections: updateFields(prev.sections) as Section[],
-  //     };
-  //   });
-  // };
-
-  // const updateField = (fieldId: string, updates: Partial<Field>) => {
-  //   setFormData((prev) => {
-  //     const updateFields = (
-  //       fields: (Field | Section)[]
-  //     ): (Field | Section)[] => {
-  //       return fields.map((item) => {
-  //         if (item.id === fieldId) {
-  //           // Update the matching field
-  //           return { ...item, ...updates };
-  //         } else if ("fields" in item) {
-  //           // Recursively handle sections containing fields
-  //           return {
-  //             ...item,
-  //             fields: updateFields(item.fields),
-  //           };
-  //         }
-  //         return item;
-  //       });
-  //     };
-
-  //     return {
-  //       ...prev,
-  //       sections: updateFields(prev.sections) as Section[],
-  //     };
-  //   });
-  // };
-
-  const updateField = (fieldId: string, updates: Partial<Field>) => {
-    console.log("updateField called with:", { fieldId, updates });
+  const removeSection = (sectionId: string) => {
     setFormData((prev) => {
-      const updateFields = (fields: (Field | Section)[]): Section[] => {
-        return fields
-          .map((item) => {
-            if ("fields" in item) {
-              // If the item is a Section, recursively update its fields
-              return {
-                ...item,
-                fields: updateFields(item.fields),
-              } as Section;
-            } else {
-              // If the item is a Field, update it if its id matches the fieldId
-              if (item.id === fieldId) {
-                return { ...item, ...updates };
-              }
-              return item;
-            }
-          })
-          .filter((item): item is Section => "fields" in item);
+      const removeFromSections = (sections: Section[]): Section[] => {
+        return sections.filter((section) => {
+          if (section.id === sectionId) {
+            return false;
+          }
+          if ("fields" in section) {
+            section.fields = removeFromSections(section.fields as Section[]);
+          }
+          return true;
+        });
       };
 
       return {
         ...prev,
-        sections: updateFields(prev.sections),
+        sections: removeFromSections(prev.sections),
       };
     });
   };
 
-  const onSubmit = (data: any) => {
-    console.log(data);
+  const removeField = (fieldId: string) => {
+    setFormData((prev) => {
+      const removeFromFields = (
+        fields: (Field | Section)[]
+      ): (Field | Section)[] => {
+        return fields.filter((field) => {
+          if (field.id === fieldId) {
+            return false;
+          }
+          if ("fields" in field) {
+            field.fields = removeFromFields(field.fields);
+          }
+          return true;
+        });
+      };
+
+      return {
+        ...prev,
+        sections: removeFromFields(prev.sections) as Section[],
+      };
+    });
+  };
+
+  const hasFields = formData.sections.some(
+    (section) =>
+      section.fields.length > 0 ||
+      section.fields.some((item) => "fields" in item && item.fields.length > 0)
+  );
+
+  // On success of the form
+  const formSubmit = async (data: any) => {
+    console.log("Submitted Data:", data);
+    setIsToastOpen(true);
   };
 
   return (
-    // <div className="w-full flex flex-col-items-center">
     <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={methods.handleSubmit(formSubmit)}
+        className="space-y-6 w-[80%] sm:w-[70%] md:w-[60%] lg:w-[45%] mx-auto"
+      >
         <div className="space-y-4">
           {formData.sections.map((section) => (
             <SectionRenderer
               key={section.id}
               section={section}
-              addField={addField}
-              // removeField={removeField}
+              onAdd={addField}
               updateField={updateField}
               onAddNestedSection={(parentId) => {
                 setCurrentParentId(parentId);
                 setIsAddSectionModalOpen(true);
               }}
+              onRemoveSection={removeSection}
+              onRemoveField={removeField}
             />
           ))}
         </div>
@@ -349,11 +224,16 @@ const FormBuilder: React.FC = () => {
           <Button
             type="submit"
             variant="outline"
-            disabled={!hasFields}
+            disabled={methods.formState.isSubmitting || !hasFields}
             className="md:w-auto w-full"
           >
             Submit
           </Button>
+          <ShadToast
+            message="Form Submitted Successfully"
+            isOpen={isToastOpen}
+            setIsOpen={setIsToastOpen}
+          />
         </div>
       </form>
       <FormPreview formData={formData} />
@@ -363,7 +243,6 @@ const FormBuilder: React.FC = () => {
         onAdd={addSection}
       />
     </FormProvider>
-    // </div>
   );
 };
 
