@@ -1,8 +1,6 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
+import type React from "react";
 import { useFormContext } from "react-hook-form";
-import { Field } from "../types/form";
+import { type Field } from "../types/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -14,17 +12,21 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { X } from "lucide-react";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
+import { useEffect, useState } from "react";
 
 interface FieldRendererProps {
   field: Field;
   updateField: (fieldId: string, updates: Partial<Field>) => void;
+  onRemoveField: (fieldId: string) => void;
 }
 
 const FieldRenderer: React.FC<FieldRendererProps> = ({
   field,
   updateField,
+  onRemoveField,
 }) => {
   const {
     register,
@@ -38,21 +40,27 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
 
   useEffect(() => {
     const fetchCountries = async () => {
-      const response = await fetch("https://restcountries.com/v3.1/all");
-      const data = await response.json();
-      // Sort countries by name and map to include code and name
-      const sortedCountries = data
-        .map((country: any) => ({
-          code: country.cca2,
-          name: country.name.common, // `common` holds the country name
-        }))
-        .sort((a: any, b: any) => a.name.localeCompare(b.name)); // Sort alphabetically
-      setCountries(sortedCountries);
+      try {
+        const response = await fetch("https://restcountries.com/v3.1/all");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch countries: ${response.status}`);
+        }
+        const data = await response.json();
+        const sortedCountries = data
+          .map((country: any) => ({
+            code: country.cca2,
+            name: country.name.common,
+          }))
+          .sort((a: any, b: any) => a.name.localeCompare(b.name));
+        setCountries(sortedCountries);
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+      }
     };
     fetchCountries();
   }, []);
 
-  // console.log("The countries", countries);
+  console.log("hwlo", countries);
 
   const renderField = () => {
     switch (field.type) {
@@ -61,10 +69,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
       case "dropdown":
         return (
           <Select
-            onValueChange={(value: string) => {
-              console.log("text filed", value);
-              // updateField(field.id, { value })
-            }}
+            onValueChange={(value: string) => updateField(field.id, { value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select an option" />
@@ -81,10 +86,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
       case "radio":
         return (
           <RadioGroup
-            onValueChange={(value: string) => {
-              console.log("Selected value:", value); // Log the selected value
-              // updateField(field.id, { value });
-            }}
+            onValueChange={(value: string) => updateField(field.id, { value })}
           >
             {(field.options || []).map((option) => (
               <div key={option} className="flex items-center space-x-2">
@@ -106,35 +108,10 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         return (
           <Checkbox {...register(field.id, { required: field.required })} />
         );
-      // case "country":
-      //   return (
-      //     <Select
-      //       onValueChange={(value: string) => {
-      //         console.log("Selected country:", value); // Log the selected country
-      //         updateField(field.id, { value });
-      //       }}
-      //     >
-      //       <SelectTrigger>
-      //         <SelectValue placeholder="Select a country" />
-      //       </SelectTrigger>
-      //       <SelectContent>
-      //         <SelectItem value="us">United States</SelectItem>
-      //         <SelectItem value="ca">Canada</SelectItem>
-      //         <SelectItem value="uk">United Kingdom</SelectItem>
-      //         <SelectItem value="au">Australia</SelectItem>
-      //         <SelectItem value="de">Germany</SelectItem>
-      //         <SelectItem value="fr">France</SelectItem>
-      //         <SelectItem value="jp">Japan</SelectItem>
-      //       </SelectContent>
-      //     </Select>
-      //   );
       case "country":
         return (
           <Select
-            onValueChange={(value: string) => {
-              console.log("Selected country:", value); // Log the selected country
-              // updateField(field.id, { value });
-            }}
+            onValueChange={(value: string) => updateField(field.id, { value })}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a country" />
@@ -143,7 +120,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
               {countries.length > 0 ? (
                 countries.map((country) => (
                   <SelectItem key={country.code} value={country.code}>
-                    {country.name} {/* Display country name here */}
+                    {country.name}
                   </SelectItem>
                 ))
               ) : (
@@ -154,7 +131,6 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
             </SelectContent>
           </Select>
         );
-
       case "date":
         return (
           <Input
@@ -165,12 +141,8 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
       case "phone":
         return (
           <PhoneInput
-            value={watch(field.id)}
-            onChange={(value) => {
-              console.log("Phone Number is", value);
-              // updateField(field.id, { value });
-            }}
-            required={field.required}
+            className="border border-gray-300 rounded p-1.5"
+            {...register(field.id, { required: field.required })}
           />
         );
       default:
@@ -185,8 +157,16 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="space-y-2">
-      <Label>{field.label}</Label>
+    <div className="space-y-2 relative">
+      <div className="flex justify-between items-center">
+        <Label>{field.label}</Label>
+        <X
+          size={16}
+          className="cursor-pointer text-gray-500 hover:text-gray-700"
+          onClick={() => onRemoveField(field.id)}
+          aria-label={`Remove ${field.label} field`}
+        />
+      </div>
       {renderField()}
       {errors[field.id] && (
         <p className="text-sm text-red-500">
