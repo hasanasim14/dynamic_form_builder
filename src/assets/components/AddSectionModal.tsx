@@ -23,7 +23,7 @@ interface AddSectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (
-    sectionTitle: string,
+    formTitle: string,
     fields: { type: FieldType; label: string; options?: string[] }[]
   ) => void;
 }
@@ -33,12 +33,12 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
   onClose,
   onAdd,
 }) => {
-  const [sectionTitle, setSectionTitle] = useState("");
+  const [formTitle, setformTitle] = useState("");
   const [fields, setFields] = useState<
     { type: FieldType; label: string; options?: string[] }[]
   >([]);
   const [error, setError] = useState<{
-    sectionTitle?: string;
+    formTitle?: string;
     fields?: string[];
   }>({});
 
@@ -61,9 +61,9 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
   };
 
   const validate = () => {
-    const newError: { sectionTitle?: string; fields?: string[] } = {};
-    if (!sectionTitle.trim()) {
-      newError.sectionTitle = "Section Title is required.";
+    const newError: { formTitle?: string; fields?: string[] } = {};
+    if (!formTitle.trim()) {
+      newError.formTitle = "Form Title is required.";
     }
 
     const fieldErrors: string[] = [];
@@ -79,14 +79,14 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
 
     setError(newError);
 
-    return !newError.sectionTitle && !newError.fields;
+    return !newError.formTitle && !newError.fields;
   };
 
   const handleSubmit = () => {
     if (!validate()) return;
 
-    onAdd(sectionTitle, fields);
-    setSectionTitle("");
+    onAdd(formTitle, fields);
+    setformTitle("");
     setFields([]);
     onClose();
   };
@@ -95,24 +95,24 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Add New Section</DialogTitle>
+          <DialogTitle>Add New Form</DialogTitle>
         </DialogHeader>
 
         <div className="flex-grow overflow-y-auto pb-16">
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="sectionTitle" className="text-right">
-                Section Title
+              <Label htmlFor="formTitle" className="text-right">
+                Form Title
               </Label>
               <Input
-                id="sectionTitle"
-                value={sectionTitle}
-                onChange={(e) => setSectionTitle(e.target.value)}
+                id="formTitle"
+                value={formTitle}
+                onChange={(e) => setformTitle(e.target.value)}
                 className="col-span-3"
               />
-              {error.sectionTitle && (
+              {error.formTitle && (
                 <div className="col-span-4 text-red-600 text-sm">
-                  {error.sectionTitle}
+                  {error.formTitle}
                 </div>
               )}
             </div>
@@ -208,10 +208,11 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
             </Button>
             <Button
               type="button"
+              // variant=""
               onClick={handleSubmit}
               className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700"
             >
-              Add Section
+              Add Form
             </Button>
           </div>
         </DialogFooter>

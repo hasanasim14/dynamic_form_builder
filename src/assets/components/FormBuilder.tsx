@@ -29,12 +29,12 @@ const FormBuilder: React.FC = () => {
   const methods = useForm();
 
   // const addSection = (
-  //   sectionTitle: string,
+  //   formTitle: string,
   //   fields: { type: FieldType; label: string; options?: string[] }[]
   // ) => {
   //   const newSection: Section = {
   //     id: uuidv4(),
-  //     title: sectionTitle,
+  //     title: formTitle,
   //     fields: fields.map((field) => ({
   //       id: uuidv4(),
   //       ...field,
@@ -60,12 +60,12 @@ const FormBuilder: React.FC = () => {
   // };
 
   const addSection = (
-    sectionTitle: string,
+    formTitle: string,
     fields: { type: FieldType; label: string; options?: string[] }[]
   ) => {
     const newSection: Section = {
       id: uuidv4(),
-      title: sectionTitle,
+      title: formTitle,
       fields: fields.map((field) => {
         switch (field.type) {
           case "dropdown":
@@ -344,7 +344,7 @@ const FormBuilder: React.FC = () => {
             onClick={() => setIsAddSectionModalOpen(true)}
             className="md:w-auto w-full"
           >
-            Add Section
+            Add Form
           </Button>
           <Button
             type="submit"

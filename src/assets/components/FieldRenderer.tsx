@@ -52,7 +52,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
     fetchCountries();
   }, []);
 
-  console.log("The countries", countries);
+  // console.log("The countries", countries);
 
   const renderField = () => {
     switch (field.type) {
@@ -61,7 +61,10 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
       case "dropdown":
         return (
           <Select
-            onValueChange={(value: string) => updateField(field.id, { value })}
+            onValueChange={(value: string) => {
+              console.log("text filed", value);
+              // updateField(field.id, { value })
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select an option" />
@@ -78,7 +81,10 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
       case "radio":
         return (
           <RadioGroup
-            onValueChange={(value: string) => updateField(field.id, { value })}
+            onValueChange={(value: string) => {
+              console.log("Selected value:", value); // Log the selected value
+              // updateField(field.id, { value });
+            }}
           >
             {(field.options || []).map((option) => (
               <div key={option} className="flex items-center space-x-2">
@@ -127,7 +133,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
           <Select
             onValueChange={(value: string) => {
               console.log("Selected country:", value); // Log the selected country
-              updateField(field.id, { value });
+              // updateField(field.id, { value });
             }}
           >
             <SelectTrigger>
@@ -160,7 +166,10 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         return (
           <PhoneInput
             value={watch(field.id)}
-            onChange={(value) => updateField(field.id, { value })}
+            onChange={(value) => {
+              console.log("Phone Number is", value);
+              // updateField(field.id, { value });
+            }}
             required={field.required}
           />
         );

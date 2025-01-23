@@ -102,20 +102,25 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
   };
 
   return (
-    <div className="border p-4 rounded-md space-y-4">
-      <div className="relative">
+    <div className="border p-4 rounded-md space-y-4 relative">
+      <div className="absolute top-2 right-2">
         {/* Section title */}
+        <X
+          size={20}
+          className="cursor-pointer text-gray-500 hover:text-gray-700"
+          onClick={() => updateField(section.id, { label: "" })} // Replace with the section removal logic if needed
+        />
+      </div>
+
+      {/* Section Title */}
+      <div className="mb-4">
+        {" "}
+        {/* Added margin bottom to separate title from button */}
         <Input
           type="text"
           value={section.title}
           onChange={(e) => updateField(section.id, { label: e.target.value })}
           className="font-bold"
-        />
-        {/* Add remove section button */}
-        <X
-          size={20}
-          className="absolute top-4 right-4 cursor-pointer text-gray-500 hover:text-gray-700"
-          onClick={() => updateField(section.id, { label: "" })} // Replace with the section removal logic if needed
         />
       </div>
 
@@ -167,24 +172,26 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
 
             <div>
               <Label>Field Type</Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger>
+              <Select
+              // value={field.type}
+              // onValueChange={(value: FieldType) =>
+              // updateField(index, { type: value })
+              // }
+              >
+                <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select field type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="text">Text</SelectItem>
-                  <SelectItem value="checkbox">Checkbox</SelectItem>
                   <SelectItem value="dropdown">Dropdown</SelectItem>
+                  <SelectItem value="radio">Radio</SelectItem>
+                  <SelectItem value="file">File</SelectItem>
+                  <SelectItem value="checkbox">Checkbox</SelectItem>
+                  <SelectItem value="country">Country</SelectItem>
+                  <SelectItem value="date">Date</SelectItem>
+                  <SelectItem value="phone">Phone</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                checked={required}
-                onCheckedChange={() => setRequired(!required)}
-              />
-              <Label>Required</Label>
             </div>
 
             <div className="mt-4 flex justify-end space-x-2">
