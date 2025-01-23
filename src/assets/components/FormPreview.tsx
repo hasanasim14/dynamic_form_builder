@@ -13,7 +13,7 @@ const FormPreview: React.FC<FormPreviewProps> = ({ formData }) => {
     const value = watch(field.id);
     return (
       <div key={field.id} className="ml-4">
-        <strong>{field.label}:</strong> {value ? value.toString() : "N/A"}
+        <strong>{field.label}:</strong> {value ? value.toString() : ""}
       </div>
     );
   };

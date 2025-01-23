@@ -6,7 +6,8 @@ export type FieldType =
   | "checkbox"
   | "country"
   | "date"
-  | "phone";
+  | "phone"
+  | "section";
 
 export interface FieldBase {
   id: string;
@@ -60,6 +61,12 @@ export interface PhoneField extends FieldBase {
   type: "phone";
 }
 
+export interface Section extends FieldBase {
+  title: string;
+  fields: (Field | Section)[];
+  type: "section";
+}
+
 export type Field =
   | TextField
   | DropdownField
@@ -68,7 +75,8 @@ export type Field =
   | CheckboxField
   | CountryField
   | DateField
-  | PhoneField;
+  | PhoneField
+  | Section;
 
 export interface Section {
   id: string;
