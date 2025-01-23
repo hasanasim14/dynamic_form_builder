@@ -206,12 +206,7 @@ const AddSectionModal: React.FC<AddSectionModalProps> = ({
             >
               Add Field
             </Button>
-            <Button
-              type="button"
-              // variant=""
-              onClick={handleSubmit}
-              className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700"
-            >
+            <Button type="button" onClick={handleSubmit}>
               Add Form
             </Button>
           </div>
