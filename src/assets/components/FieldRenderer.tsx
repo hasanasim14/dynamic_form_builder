@@ -1,6 +1,6 @@
 import type React from "react";
 import { useFormContext } from "react-hook-form";
-import { type Field } from "../types/form";
+import type { Field } from "../types/form";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -62,13 +62,22 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
   }, []);
 
   const renderField = () => {
+    const commonProps = {
+      ...register(field.id, {
+        required: field.required ? `${field.label} is required` : false,
+      }),
+    };
+
     switch (field.type) {
       case "text":
-        return <Input {...register(field.id, { required: field.required })} />;
+        return <Input {...commonProps} />;
       case "dropdown":
         return (
           <Select
-            onValueChange={(value: string) => updateField(field.id, { value })}
+            onValueChange={(value: string) => {
+              updateField(field.id, { value });
+              setValue(field.id, value);
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select an option" />
@@ -85,7 +94,10 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
       case "radio":
         return (
           <RadioGroup
-            onValueChange={(value: string) => updateField(field.id, { value })}
+            onValueChange={(value: string) => {
+              updateField(field.id, { value });
+              setValue(field.id, value);
+            }}
           >
             {(field.options || []).map((option) => (
               <div key={option} className="flex items-center space-x-2">
@@ -96,21 +108,24 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
           </RadioGroup>
         );
       case "file":
-        return (
-          <Input
-            type="file"
-            {...register(field.id, { required: field.required })}
-            accept={field.accept}
-          />
-        );
+        return <Input type="file" {...commonProps} accept={field.accept} />;
       case "checkbox":
         return (
-          <Checkbox {...register(field.id, { required: field.required })} />
+          <Checkbox
+            {...commonProps}
+            onCheckedChange={(checked) => {
+              updateField(field.id, { value: checked });
+              setValue(field.id, checked);
+            }}
+          />
         );
       case "country":
         return (
           <Select
-            onValueChange={(value: string) => updateField(field.id, { value })}
+            onValueChange={(value: string) => {
+              updateField(field.id, { value });
+              setValue(field.id, value);
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select a country" />
@@ -118,7 +133,7 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
             <SelectContent>
               {countries.length > 0 ? (
                 countries.map((country) => (
-                  <SelectItem key={country.code} value={country.code}>
+                  <SelectItem key={country.code} value={country.name}>
                     {country.name}
                   </SelectItem>
                 ))
@@ -134,15 +149,21 @@ const FieldRenderer: React.FC<FieldRendererProps> = ({
         return (
           <Input
             type="date"
-            {...register(field.id, { required: field.required })}
+            {...commonProps}
+            onChange={(e) => {
+              updateField(field.id, { value: e.target.value });
+              setValue(field.id, e.target.value);
+            }}
           />
         );
       case "phone":
         return (
           <PhoneInput
+            {...commonProps}
             className="border border-gray-300 rounded p-1.5"
-            value={field.value}
+            value={field.value as string}
             onChange={(value) => {
+              updateField(field.id, { value });
               setValue(field.id, value);
             }}
           />

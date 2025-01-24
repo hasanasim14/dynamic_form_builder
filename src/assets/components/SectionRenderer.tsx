@@ -71,7 +71,6 @@ const SectionRenderer: React.FC<SectionRendererProps> = ({
 
   return (
     <div className="border p-4 rounded-md relative bg-white">
-      {/* <div className="absolute top-0 left-0 right-0 bg-[#6641b2] text-white p-2 rounded-t-md" /> */}
       <div className="absolute top-6 right-2">
         <X
           size={20}

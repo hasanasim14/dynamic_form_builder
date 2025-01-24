@@ -22,49 +22,12 @@ import type {
 import SectionRenderer from "./SectionRenderer";
 import FormPreview from "./FormPreview";
 import AddSectionModal from "./AddSectionModal";
-import ShadToast from "@/components/ui/shadToast";
 
 const FormBuilder: React.FC = () => {
-  const [isToastOpen, setIsToastOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({ sections: [] });
   const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
   const [currentParentId, setCurrentParentId] = useState<string | null>(null);
   const methods = useForm();
-
-  console.log("FormData", formData);
-  console.log("FormData", currentParentId);
-
-  // const addSection = (
-  //   sectionTitle: string,
-  //   fields: { type: FieldType; label: string; options?: string[] }[]
-  // ) => {
-  //   const newSection: Section = {
-  //     id: uuidv4(),
-  //     title: sectionTitle,
-  //     fields: fields.map((field) => ({
-  //       id: uuidv4(),
-  //       ...field,
-  //       value: field.type === "checkbox" ? false : "",
-  //     })),
-  //   };
-  //   setFormData((prev) => {
-  //     if (currentParentId) {
-  //       return {
-  //         ...prev,
-  //         sections: updateNestedSection(
-  //           prev.sections,
-  //           currentParentId,
-  //           newSection
-  //         ),
-  //       };
-  //     }
-  //     return {
-  //       ...prev,
-  //       sections: [...prev.sections, newSection],
-  //     };
-  //   });
-  //   setCurrentParentId(null);
-  // };
 
   const addSection = (
     sectionTitle: string,
@@ -73,44 +36,59 @@ const FormBuilder: React.FC = () => {
     const newSection: Section = {
       id: uuidv4(),
       title: sectionTitle,
-      label: sectionTitle, // Assuming label is same as title, or can adjust based on your needs.
-      type: "section", // Must be 'section' to meet the Section interface.
+      label: sectionTitle,
+      type: "section",
       fields: fields.map((field) => {
-        const fieldWithValue = {
-          ...field,
+        const baseField = {
           id: uuidv4(),
-          value: field.type === "checkbox" ? false : "", // Default value based on type
+          ...field,
+          value: field.type === "checkbox" ? false : "",
+          required: true,
         };
 
-        // Ensure the type matches the specific field interfaces
         switch (field.type) {
           case "text":
-            return fieldWithValue as TextField;
+            return baseField as TextField;
           case "dropdown":
             return {
-              ...fieldWithValue,
-              options: field.options,
+              ...baseField,
+              options: field.options || [],
             } as DropdownField;
           case "radio":
-            return { ...fieldWithValue, options: field.options } as RadioField;
+            return { ...baseField, options: field.options || [] } as RadioField;
           case "checkbox":
-            return fieldWithValue as CheckboxField;
+            return baseField as CheckboxField;
           case "file":
-            return fieldWithValue as FileField;
+            return baseField as FileField;
           case "country":
-            return fieldWithValue as CountryField;
+            return baseField as CountryField;
           case "date":
-            return fieldWithValue as DateField;
+            return baseField as DateField;
           case "phone":
-            return fieldWithValue as PhoneField;
+            return baseField as PhoneField;
           default:
-            // We shouldn't reach here, but if we do, throw an error
             throw new Error(`Unknown field type: ${field.type}`);
         }
       }),
     };
 
-    return newSection;
+    setFormData((prev) => {
+      if (currentParentId) {
+        return {
+          ...prev,
+          sections: updateNestedSection(
+            prev.sections,
+            currentParentId,
+            newSection
+          ),
+        };
+      }
+      return {
+        ...prev,
+        sections: [...prev.sections, newSection],
+      };
+    });
+    setCurrentParentId(null);
   };
 
   const updateNestedSection = (
@@ -128,7 +106,10 @@ const FormBuilder: React.FC = () => {
         return {
           ...section,
           fields: updateNestedSection(
-            section.fields as Section[],
+            section.fields.filter(
+              (field): field is Section =>
+                "type" in field && field.type === "section"
+            ),
             parentId,
             newSection
           ),
@@ -138,43 +119,6 @@ const FormBuilder: React.FC = () => {
     });
   };
 
-  // const addField = (
-  //   sectionId: string,
-  //   fields: { type: FieldType; label: string; options?: string[] }[]
-  // ) => {
-  //   setFormData((prev) => {
-  //     const updateFields = (sections: Section[]): Section[] => {
-  //       return sections.map((section) => {
-  //         if (section.id === sectionId) {
-  //           return {
-  //             ...section,
-  //             fields: [
-  //               ...section.fields,
-  //               ...fields.map((field) => ({
-  //                 id: uuidv4(),
-  //                 ...field,
-  //                 value: field.type === "checkbox" ? false : "",
-  //               })),
-  //             ],
-  //           };
-  //         } else if ("fields" in section) {
-  //           return {
-  //             ...section,
-  //             fields: updateFields(section.fields as Section[]),
-  //           };
-  //         }
-  //         return section;
-  //       });
-  //     };
-
-  //     return {
-  //       ...prev,
-  //       sections: updateFields(prev.sections),
-  //     };
-  //   });
-  // };
-
-  // working
   const addField = (
     sectionId: string,
     fields: { type: FieldType; label: string; options?: string[] }[]
@@ -183,42 +127,41 @@ const FormBuilder: React.FC = () => {
       const updateFields = (sections: Section[]): Section[] => {
         return sections.map((section) => {
           if (section.id === sectionId) {
-            // Ensure the correct field type by using type guards and assertions
             return {
               ...section,
               fields: [
                 ...section.fields,
-                ...fields.map((field) => {
-                  const fieldWithValue = {
+                ...fields.map((field): Field => {
+                  const baseField = {
                     id: uuidv4(),
                     ...field,
                     value: field.type === "checkbox" ? false : "",
+                    required: true,
                   };
 
-                  // Assert the correct type for each field
                   switch (field.type) {
                     case "text":
-                      return fieldWithValue as TextField;
+                      return baseField as TextField;
                     case "dropdown":
                       return {
-                        ...fieldWithValue,
-                        options: field.options,
+                        ...baseField,
+                        options: field.options || [],
                       } as DropdownField;
                     case "radio":
                       return {
-                        ...fieldWithValue,
-                        options: field.options,
+                        ...baseField,
+                        options: field.options || [],
                       } as RadioField;
                     case "checkbox":
-                      return fieldWithValue as CheckboxField;
+                      return baseField as CheckboxField;
                     case "file":
-                      return fieldWithValue as FileField;
+                      return baseField as FileField;
                     case "country":
-                      return fieldWithValue as CountryField;
+                      return baseField as CountryField;
                     case "date":
-                      return fieldWithValue as DateField;
+                      return baseField as DateField;
                     case "phone":
-                      return fieldWithValue as PhoneField;
+                      return baseField as PhoneField;
                     default:
                       throw new Error(`Unknown field type: ${field.type}`);
                   }
@@ -228,7 +171,12 @@ const FormBuilder: React.FC = () => {
           } else if ("fields" in section) {
             return {
               ...section,
-              fields: updateFields(section.fields as Section[]),
+              fields: updateFields(
+                section.fields.filter(
+                  (field): field is Section =>
+                    "type" in field && field.type === "section"
+                )
+              ),
             };
           }
           return section;
@@ -242,284 +190,33 @@ const FormBuilder: React.FC = () => {
     });
   };
 
-  // const updateField = (fieldId: string, updates: Partial<Field>) => {
-  //   setFormData((prev) => {
-  //     // Explicitly define the type of fields as an array of either Fields or Sections
-  //     const updateFields = (
-  //       fields: (Field | Section)[]
-  //     ): (Field | Section)[] => {
-  //       return fields.map((item) => {
-  //         // Ensure each item is either Field or Section
-  //         if ("id" in item && item.id === fieldId) {
-  //           // Spread the existing item with the updates for matching field ID
-  //           return { ...item, ...updates };
-  //         } else if ("fields" in item) {
-  //           // Recursively call updateFields for sections that contain other fields or sections
-  //           return {
-  //             ...item,
-  //             fields: updateFields(item.fields), // recurse into the nested fields
-  //           };
-  //         }
-  //         return item; // return the item unchanged if no matching field ID
-  //       });
-  //     };
-
-  //     // Now return the updated form data structure
-  //     return {
-  //       ...prev,
-  //       sections: updateFields(prev.sections), // Ensure sections are updated with modified fields
-  //     };
-  //   });
-  // };
-
-  // const addField = (
-  //   sectionId: string,
-  //   fields: { type: FieldType; label: string; options?: string[] }[] // Declare your field types here.
-  // ) => {
-  //   setFormData((prev) => {
-  //     const updateFields = (sections: Section[]): Section[] => {
-  //       return sections.map((section) => {
-  //         if (section.id === sectionId) {
-  //           return {
-  //             ...section,
-  //             fields: [
-  //               ...section.fields,
-  //               ...fields.map((field) => {
-  //                 // Dynamically map field types correctly
-  //                 if (field.type === "dropdown") {
-  //                   return {
-  //                     id: uuidv4(),
-  //                     type: "dropdown",
-  //                     label: field.label,
-  //                     options: field.options || [],
-  //                     value: "",
-  //                   } as DropdownField;
-  //                 }
-
-  //                 if (field.type === "text") {
-  //                   return {
-  //                     id: uuidv4(),
-  //                     type: "text",
-  //                     label: field.label,
-  //                     value: "",
-  //                   } as TextField;
-  //                 }
-
-  //                 if (field.type === "radio") {
-  //                   return {
-  //                     id: uuidv4(),
-  //                     type: "radio",
-  //                     label: field.label,
-  //                     options: field.options || [],
-  //                     value: "",
-  //                   } as RadioField;
-  //                 }
-
-  //                 // For any other type of fields (checkbox, phone, etc.)
-  //                 return {
-  //                   id: uuidv4(),
-  //                   type: field.type,
-  //                   label: field.label,
-  //                   value: field.type === "checkbox" ? false : "",
-  //                 };
-  //               }),
-  //             ],
-  //           };
-  //         } else if ("fields" in section) {
-  //           return {
-  //             ...section,
-  //             fields: updateFields(section.fields as Section[]),
-  //           };
-  //         }
-  //         return section;
-  //       });
-  //     };
-
-  //     return {
-  //       ...prev,
-  //       sections: updateFields(prev.sections), // Ensure type safety here
-  //     };
-  //   });
-  // };
-
-  // const updateField = (fieldId: string, updates: Partial<Field>) => {
-  //   setFormData((prev) => {
-  //     // Explicitly update the sections while respecting the FormData structure
-  //     const updateFields = (
-  //       fields: (Field | Section)[]
-  //     ): (Field | Section)[] => {
-  //       return fields.map((item) => {
-  //         if ("id" in item && item.id === fieldId) {
-  //           return { ...item, ...updates }; // Update matching field
-  //         } else if ("fields" in item) {
-  //           return {
-  //             ...item,
-  //             fields: updateFields(item.fields), // Recursively update fields in nested sections
-  //           };
-  //         }
-  //         return item; // Return unchanged item if no match
-  //       });
-  //     };
-
-  //     // Return the updated formData structure ensuring sections are strictly Section[]
-  //     return {
-  //       ...prev,
-  //       sections: updateFields(prev.sections) as Section[], // Ensure sections are typed correctly
-  //     };
-  //   });
-  // };
-
-  // Type guard to check for a TextField type
-
-  // const updateField = (fieldId: string, updates: Partial<Field>) => {
-  //   setFormData((prev) => {
-  //     const updateFields = (fields: (Field | Section)[]) => {
-  //       return fields.map((item) => {
-  //         if (item.id === fieldId) {
-  //           return { ...item, ...updates }
-  //         } else if ("fields" in item) {
-  //           return {
-  //             ...item,
-  //             fields: updateFields(item.fields),
-  //           }
-  //         }
-  //         return item
-  //       })
-  //     }
-
-  //     return {
-  //       ...prev,
-  //       sections: updateFields(prev.sections) as Section[],
-  //     }
-  //   })
-  // }
-
-  // const updateField = (fieldId: string, updates: Partial<Field>) => {
-  //   setFormData((prev: FormData) => {
-  //     const updateFields = (fields: (Field | Section)[]): (Field | Section)[] => {
-  //       return fields.map((item: Field | Section) => {
-  //         if (item.id === fieldId) {
-  //           return { ...item, ...updates };
-  //         } else if ("fields" in item) {
-  //           return {
-  //             ...item,
-  //             fields: updateFields(item.fields),
-  //           };
-  //         }
-  //         return item;
-  //       });
-  //     };
-
-  //     return {
-  //       ...prev,
-  //       sections: updateFields(prev.sections),
-  //     };
-  //   });
-  // };
-  // Type Guards for Fields
-  function isTextField(field: Field): field is TextField {
-    return field.type === "text";
-  }
-
-  function isDropdownField(field: Field): field is DropdownField {
-    return field.type === "dropdown";
-  }
-
-  function isRadioField(field: Field): field is RadioField {
-    return field.type === "radio";
-  }
-
-  function isFileField(field: Field): field is FileField {
-    return field.type === "file";
-  }
-
-  function isCheckboxField(field: Field): field is CheckboxField {
-    return field.type === "checkbox";
-  }
-
-  function isCountryField(field: Field): field is CountryField {
-    return field.type === "country";
-  }
-
-  function isDateField(field: Field): field is DateField {
-    return field.type === "date";
-  }
-
-  function isPhoneField(field: Field): field is PhoneField {
-    return field.type === "phone";
-  }
-
-  function isSection(field: Field): field is Section {
-    return field.type === "section";
-  }
-
-  // Modified updateField method
-  // Modified updateField method
   const updateField = (fieldId: string, updates: Partial<Field>) => {
-    setFormData((prev: FormData) => {
-      // Function to update fields within sections (recursive)
+    setFormData((prev) => {
       const updateFields = (
         fields: (Field | Section)[]
       ): (Field | Section)[] => {
         return fields.map((item) => {
-          // If this item is a Section, update its fields recursively
-          if (isSection(item)) {
+          if (item.id === fieldId) {
+            return { ...item, ...updates } as Field;
+          } else if ("fields" in item) {
             return {
               ...item,
-              fields: updateFields(item.fields), // Recursive update for nested fields
-            } as Section;
+              fields: updateFields(item.fields),
+            };
           }
-
-          // If the current item is the field to be updated
-          if (item.id === fieldId) {
-            // Handle TextField update
-            if (isTextField(item)) {
-              return { ...item, ...updates } as TextField;
-            }
-            // Handle DropdownField update
-            if (isDropdownField(item)) {
-              return { ...item, ...updates } as DropdownField;
-            }
-            // Handle RadioField update
-            if (isRadioField(item)) {
-              return { ...item, ...updates } as RadioField;
-            }
-            // Handle FileField update
-            if (isFileField(item)) {
-              return { ...item, ...updates } as FileField;
-            }
-            // Handle CheckboxField update
-            if (isCheckboxField(item)) {
-              return { ...item, ...updates } as CheckboxField;
-            }
-            // Handle CountryField update
-            if (isCountryField(item)) {
-              return { ...item, ...updates } as CountryField;
-            }
-            // Handle DateField update
-            if (isDateField(item)) {
-              return { ...item, ...updates } as DateField;
-            }
-            // Handle PhoneField update
-            if (isPhoneField(item)) {
-              return { ...item, ...updates } as PhoneField;
-            }
-          }
-
-          // If the item doesn't match the id, just return it unchanged
           return item;
         });
       };
 
-      // Returning updated form data structure with Section[]
       return {
         ...prev,
-        sections: updateFields(prev.sections).filter(
-          (section): section is Section => isSection(section)
-        ),
+        sections: updateFields(prev.sections) as Section[],
       };
     });
+
+    methods.setValue(fieldId, updates.value);
   };
+
   const removeSection = (sectionId: string) => {
     setFormData((prev) => {
       const removeFromSections = (sections: Section[]): Section[] => {
@@ -528,7 +225,12 @@ const FormBuilder: React.FC = () => {
             return false;
           }
           if ("fields" in section) {
-            section.fields = removeFromSections(section.fields as Section[]);
+            section.fields = removeFromSections(
+              section.fields.filter(
+                (field): field is Section =>
+                  "type" in field && field.type === "section"
+              )
+            );
           }
           return true;
         });
@@ -570,16 +272,14 @@ const FormBuilder: React.FC = () => {
       section.fields.some((item) => "fields" in item && item.fields.length > 0)
   );
 
-  // On success of the form
-  const formSubmit = async (data: any) => {
+  const onSubmit = (data: any) => {
     console.log("Submitted Data:", data);
-    setIsToastOpen(true);
   };
 
   return (
     <FormProvider {...methods}>
       <form
-        onSubmit={methods.handleSubmit(formSubmit)}
+        onSubmit={methods.handleSubmit(onSubmit)}
         className="space-y-6 w-[80%] sm:w-[70%] md:w-[60%] lg:w-[45%] mx-auto"
       >
         <div className="space-y-4">
@@ -610,16 +310,11 @@ const FormBuilder: React.FC = () => {
           <Button
             type="submit"
             variant="outline"
-            disabled={methods.formState.isSubmitting || !hasFields}
+            disabled={!hasFields}
             className="md:w-auto w-full"
           >
             Submit
           </Button>
-          <ShadToast
-            message="Form Submitted Successfully"
-            isOpen={isToastOpen}
-            setIsOpen={setIsToastOpen}
-          />
         </div>
       </form>
       <FormPreview formData={formData} />
